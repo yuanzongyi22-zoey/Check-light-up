@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>点亮日历 · 320 天</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #0b1220; color: #e2e8f0; min-height: 100vh; }
+  header { position: sticky; top: 0; z-index: 10; background: rgba(11,18,32,.88); backdrop-filter: blur(10px); border-bottom: 1px solid #1e293b; padding: 16px 20px 14px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 14px; font-weight: 500; color: #94a3b8; letter-spacing: 2px; }
+  .count { font-size: 28px; font-weight: 700; margin-top: 2px; }
+  .count b { color: #fbbf24; font-size: 38px; }
+  .count .total { color: #64748b; font-size: 17px; font-weight: 600; }
+  .remain { font-size: 13px; color: #94a3b8; margin-top: 2px; }
+  .remain.done { color: #34d399; font-weight: 600; }
+  button.reset { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  button.reset:hover { color: #f87171; border-color: #f87171; }
+  .bar-wrap { max-width: 1100px; margin: 10px auto 0; height: 8px; background: #1e293b; border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; width: 0%; border-radius: 99px; background: linear-gradient(90deg, #f59e0b, #fbbf24); transition: width .35s ease; }
+  .bar-fill.done { background: linear-gradient(90deg, #10b981, #34d399); }
+  main { max-width: 1100px; margin: 0 auto; padding: 10px 20px 60px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 4px; font-size: 12px; color: #94a3b8; }
+  .legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
+  .legend .sw-ban { position: relative; }
+  .legend .sw-ban::after { content: '班'; position: absolute; top: -4px; right: -2px; font-size: 8px; color: #fb7185; }
+  .year-title { font-size: 20px; font-weight: 700; margin: 26px 0 12px; color: #f1f5f9; }
+  .months { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .month { background: #111a2c; border: 1px solid #1e293b; border-radius: 14px; padding: 14px; }
+  .month-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .month-head h3 { font-size: 15px; font-weight: 600; }
+  .month-head .mc { font-size: 12px; color: #fbbf24; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .dow { text-align: center; font-size: 11px; color: #475569; padding: 2px 0 6px; }
+  .day { position: relative; aspect-ratio: 1 / 1; border: none; border-radius: 8px; background: #1b2740; color: #cbd5e1; font-size: 12.5px; cursor: pointer; transition: transform .08s ease, background .15s ease; font-family: inherit; }
+  .day:hover { background: #24344f; }
+  .day:active { transform: scale(.9); }
+  .day.wknd { background: #2a3a5f; color: #9fb3d9; }
+  .day.wknd:hover { background: #33456e; }
+  .day.vac { background: #1e40af; color: #bfdbfe; }
+  .day.vac:hover { background: #2563eb; }
+  .day.hol { background: #831843; color: #fecdd3; font-weight: 600; }
+  .day.hol:hover { background: #9d2a56; }
+  .day.ban::after { content: '班'; position: absolute; top: 0; right: 2px; font-size: 8px; color: #fb7185; line-height: 1; }
+  .day.lit { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #1c1917; font-weight: 700; box-shadow: 0 0 10px rgba(245,158,11,.45); }
+  .blank { aspect-ratio: 1 / 1; }
+  footer { text-align: center; color: #475569; font-size: 12px; padding-bottom: 30px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div>
+      <h1>点亮日历</h1>
+      <div class="count"><b id="count">0</b> <span class="total">/ 320 天</span></div>
+      <div class="remain" id="remain">还差 320 天</div>
+    </div>
+    <button class="reset" id="reset">清空记录</button>
+  </div>
+  <div class="bar-wrap"><div class="bar-fill" id="fill"></div></div>
+</header>
+<div class="legend">
+    <span><i class="sw" style="background:#1b2740"></i>工作日</span>
+    <span><i class="sw" style="background:#2a3a5f"></i>周末</span>
+    <span><i class="sw" style="background:#831843"></i>法定节假日</span>
+    <span><i class="sw" style="background:#1e40af"></i>寒假</span>
+    <span><i class="sw sw-ban" style="background:#2a3a5f"></i>调休上班</span>
+    <span><i class="sw" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"></i>已点亮</span>
+  </div>
+<main id="app"></main>
+<footer>2026 年节假日按官方放假安排；2027/2028 年节假日为预估（官方安排尚未发布），仅供参考</footer>
+
+<script>
+  const TARGET = 320;
+  const START = { y: 2026, m: 1 };  // 起始：2026 年 1 月
+  const END   = { y: 2028, m: 3 };  // 结束：2028 年 3 月（如需延长改这里）
+  const KEY = 'lit-days-320-v1';
+
+  const pad = n => String(n).padStart(2, '0');
+  const keyOf = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
+
+  // 法定节假日（放假日期）
+  const HOLIDAYS = {
+    // 2026 官方安排
+    '2026-01-01': '元旦', '2026-01-02': '元旦', '2026-01-03': '元旦',
+    '2026-02-15': '春节', '2026-02-16': '春节', '2026-02-17': '春节', '2026-02-18': '春节',
+    '2026-02-19': '春节', '2026-02-20': '春节', '2026-02-21': '春节', '2026-02-22': '春节',
+    '2026-04-04': '清明', '2026-04-05': '清明', '2026-04-06': '清明',
+    '2026-05-01': '劳动节', '2026-05-02': '劳动节', '2026-05-03': '劳动节', '2026-05-04': '劳动节', '2026-05-05': '劳动节',
+    '2026-06-19': '端午', '2026-06-20': '端午', '2026-06-21': '端午',
+    '2026-09-25': '中秋', '2026-09-26': '中秋', '2026-09-27': '中秋',
+    '2026-10-01': '国庆', '2026-10-02': '国庆', '2026-10-03': '国庆', '2026-10-04': '国庆',
+    '2026-10-05': '国庆', '2026-10-06': '国庆', '2026-10-07': '国庆',
+    // 2027 预估（官方未发布）
+    '2027-01-01': '元旦', '2027-01-02': '元旦', '2027-01-03': '元旦',
+    '2027-02-05': '春节', '2027-02-06': '春节', '2027-02-07': '春节', '2027-02-08': '春节',
+    '2027-02-09': '春节', '2027-02-10': '春节', '2027-02-11': '春节', '2027-02-12': '春节',
+    '2027-04-03': '清明', '2027-04-04': '清明', '2027-04-05': '清明',
+    '2027-05-01': '劳动节', '2027-05-02': '劳动节', '2027-05-03': '劳动节', '2027-05-04': '劳动节', '2027-05-05': '劳动节',
+    '2027-06-09': '端午',
+    '2027-09-15': '中秋',
+    '2027-10-01': '国庆', '2027-10-02': '国庆', '2027-10-03': '国庆', '2027-10-04': '国庆',
+    '2027-10-05': '国庆', '2027-10-06': '国庆', '2027-10-07': '国庆',
+    // 2028 预估（官方未发布）
+    '2028-01-01': '元旦', '2028-01-02': '元旦',
+    '2028-01-25': '春节', '2028-01-26': '春节', '2028-01-27': '春节', '2028-01-28': '春节',
+    '2028-01-29': '春节', '2028-01-30': '春节', '2028-01-31': '春节', '2028-02-01': '春节',
+  };
+
+  // 调休上班日（周末上班）—— 2026 官方安排
+  const WORKDAYS = {
+    '2026-02-14': 1, '2026-02-28': 1, '2026-04-26': 1,
+    '2026-09-27': 1, '2026-10-10': 1,
+  };
+
+  // 寒假区间
+  const VAC = { from: '2027-01-15', to: '2027-02-21' };
+
+  // 底色优先级：已点亮 > 法定节假日 > 寒假 > 周末/调休 > 工作日
+  function dayInfo(k) {
+    if (HOLIDAYS[k]) return { cls: 'hol', title: HOLIDAYS[k] };
+    if (k >= VAC.from && k <= VAC.to) return { cls: 'vac', title: '寒假' };
+    const y = +k.slice(0, 4), m = +k.slice(5, 7), d = +k.slice(8);
+    const wd = new Date(y, m - 1, d).getDay();
+    if (wd === 0 || wd === 6) {
+      return WORKDAYS[k] ? { cls: 'wknd ban', title: '调休上班' } : { cls: 'wknd', title: '周末' };
+    }
+    return WORKDAYS[k] ? { cls: 'ban', title: '调休上班' } : { cls: '', title: '' };
+  }
+
+  let lit = new Set();
+  try { lit = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch (e) {}
+  let selectionAnchor = null;
+
+  const now = new Date();
+  const todayKey = keyOf(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const WEEK = ['一', '二', '三', '四', '五', '六', '日'];
+
+  function countMonth(y, m) {
+    const p = `${y}-${pad(m)}`;
+    let n = 0;
+    lit.forEach(k => { if (k.startsWith(p)) n++; });
+    return n;
+  }
+
+  function dateRange(from, to) {
+    const start = new Date(`${from}T00:00:00Z`);
+    const end = new Date(`${to}T00:00:00Z`);
+    const step = start <= end ? 1 : -1;
+    const dates = [];
+    for (let cursor = start; step > 0 ? cursor <= end : cursor >= end; cursor.setUTCDate(cursor.getUTCDate() + step)) {
+      dates.push(cursor.toISOString().slice(0, 10));
+    }
+    return dates;
+  }
+
+  function refreshMonthCounts() {
+    document.querySelectorAll('[id^="mc-"]').forEach(el => {
+      const [y, m] = el.id.slice(3).split('-').map(Number);
+      el.textContent = countMonth(y, m) + ' 天';
+    });
+  }
+
+  function monthHtml(y, m) {
+    const days = new Date(y, m, 0).getDate();
+    const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7; // 周一开头
+    let cells = '';
+    for (let i = 0; i < lead; i++) cells += '<span class="blank"></span>';
+    for (let d = 1; d <= days; d++) {
+      const k = keyOf(y, m, d);
+      const info = dayInfo(k);
+      const cls = ['day'];
+      if (info.cls) cls.push(...info.cls.split(' '));
+      if (lit.has(k)) cls.push('lit');
+      if (k === todayKey) cls.push('today');
+      const title = [info.title, k].filter(Boolean).join(' ');
+      cells += `<button class="${cls.join(' ')}" data-date="${k}" title="${title}">${d}</button>`;
+    }
+    return `<div class="month">
+      <div class="month-head"><h3>${y} 年 ${m} 月</h3><span class="mc" id="mc-${y}-${pad(m)}">${countMonth(y, m)} 天</span></div>
+      <div class="grid">${WEEK.map(w => `<span class="dow">${w}</span>`).join('')}${cells}</div>
+    </div>`;
+  }
+
+  function render() {
+    let html = '';
+    for (let y = START.y; y <= END.y; y++) {
+      const mFrom = (y === START.y) ? START.m : 1;
+      const mTo   = (y === END.y)   ? END.m   : 12;
+      html += `<div class="year-title">${y} 年</div><div class="months">`;
+      for (let m = mFrom; m <= mTo; m++) html += monthHtml(y, m);
+      html += `</div>`;
+    }
+    document.getElementById('app').innerHTML = html;
+    updateStats();
+  }
+
+  function updateStats() {
+    const n = lit.size;
+    document.getElementById('count').textContent = n;
+    const remainEl = document.getElementById('remain');
+    const fill = document.getElementById('fill');
+    fill.style.width = Math.min(100, n / TARGET * 100) + '%';
+    if (n >= TARGET) {
+      remainEl.textContent = '目标达成';
+      remainEl.classList.add('done');
+      fill.classList.add('done');
+    } else {
+      remainEl.textContent = `还差 ${TARGET - n} 天`;
+      remainEl.classList.remove('done');
+      fill.classList.remove('done');
+    }
+  }
+
+  document.getElementById('app').addEventListener('click', e => {
+    const btn = e.target.closest('.day');
+    if (!btn) return;
+    const k = btn.dataset.date;
+    if (e.shiftKey && selectionAnchor) {
+      dateRange(selectionAnchor, k).forEach(date => lit.add(date));
+    } else if (lit.has(k)) {
+      lit.delete(k);
+    } else {
+      lit.add(k);
+    }
+    selectionAnchor = k;
+    localStorage.setItem(KEY, JSON.stringify([...lit].sort()));
+    render();
+    updateStats();
+  });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    if (confirm('确定要清空所有点亮记录吗？')) {
+      lit.clear();
+      localStorage.removeItem(KEY);
+      render();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
