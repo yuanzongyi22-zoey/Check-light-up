@@ -8,7 +8,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #0b1220; color: #e2e8f0; min-height: 100vh; }
   header { position: sticky; top: 0; z-index: 10; background: rgba(11,18,32,.88); backdrop-filter: blur(10px); border-bottom: 1px solid #1e293b; padding: 16px 20px 14px; }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1100px; margin: 0 auto; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1060px; margin: 0 auto; }
   h1 { font-size: 14px; font-weight: 500; color: #94a3b8; letter-spacing: 2px; }
   .count { font-size: 28px; font-weight: 700; margin-top: 2px; }
   .count b { color: #fbbf24; font-size: 38px; }
@@ -17,11 +17,11 @@
   .remain.done { color: #34d399; font-weight: 600; }
   button.reset { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
   button.reset:hover { color: #f87171; border-color: #f87171; }
-  .bar-wrap { max-width: 1100px; margin: 10px auto 0; height: 8px; background: #1e293b; border-radius: 99px; overflow: hidden; }
+  .bar-wrap { max-width: 1060px; margin: 10px auto 0; height: 8px; background: #1e293b; border-radius: 99px; overflow: hidden; }
   .bar-fill { height: 100%; width: 0%; border-radius: 99px; background: linear-gradient(90deg, #f59e0b, #fbbf24); transition: width .35s ease; }
   .bar-fill.done { background: linear-gradient(90deg, #10b981, #34d399); }
   main { max-width: 1100px; margin: 0 auto; padding: 10px 20px 60px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 4px; font-size: 12px; color: #94a3b8; }
+  .legend { max-width: 1060px; margin: 14px auto 4px; display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: #94a3b8; }
   .legend .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
   .legend .sw-ban { position: relative; }
   .legend .sw-ban::after { content: '班'; position: absolute; top: -4px; right: -2px; font-size: 8px; color: #fb7185; }
@@ -38,10 +38,10 @@
   .day:active { transform: scale(.9); }
   .day.wknd { background: #2a3a5f; color: #9fb3d9; }
   .day.wknd:hover { background: #33456e; }
-  .day.vac { background: #1e40af; color: #bfdbfe; }
-  .day.vac:hover { background: #2563eb; }
-  .day.hol { background: #831843; color: #fecdd3; font-weight: 600; }
-  .day.hol:hover { background: #9d2a56; }
+  .day.vac { background: #b9d8f5; color: #17324d; }
+  .day.vac:hover { background: #a8ccef; }
+  .day.hol { background: #f3c1cf; color: #5a2535; font-weight: 600; }
+  .day.hol:hover { background: #edafc0; }
   .day.ban::after { content: '班'; position: absolute; top: 0; right: 2px; font-size: 8px; color: #fb7185; line-height: 1; }
   .day.lit { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #1c1917; font-weight: 700; box-shadow: 0 0 10px rgba(245,158,11,.45); }
   .blank { aspect-ratio: 1 / 1; }
@@ -63,8 +63,8 @@
 <div class="legend">
     <span><i class="sw" style="background:#1b2740"></i>工作日</span>
     <span><i class="sw" style="background:#2a3a5f"></i>周末</span>
-    <span><i class="sw" style="background:#831843"></i>法定节假日</span>
-    <span><i class="sw" style="background:#1e40af"></i>寒假</span>
+    <span><i class="sw" style="background:#f3c1cf"></i>法定节假日</span>
+    <span><i class="sw" style="background:#b9d8f5"></i>寒假</span>
     <span><i class="sw sw-ban" style="background:#2a3a5f"></i>调休上班</span>
     <span><i class="sw" style="background:linear-gradient(135deg,#f59e0b,#fbbf24)"></i>已点亮</span>
   </div>
@@ -73,8 +73,8 @@
 
 <script>
   const TARGET = 320;
-  const START = { y: 2026, m: 1 };  // 起始：2026 年 1 月
-  const END   = { y: 2028, m: 3 };  // 结束：2028 年 3 月（如需延长改这里）
+  const START = { y: 2026, m: 10 }; // 起始：2026 年 10 月
+  const END   = { y: 2028, m: 6 };  // 结束：2028 年 6 月
   const KEY = 'lit-days-320-v1';
 
   const pad = n => String(n).padStart(2, '0');
@@ -106,6 +106,10 @@
     '2028-01-01': '元旦', '2028-01-02': '元旦',
     '2028-01-25': '春节', '2028-01-26': '春节', '2028-01-27': '春节', '2028-01-28': '春节',
     '2028-01-29': '春节', '2028-01-30': '春节', '2028-01-31': '春节', '2028-02-01': '春节',
+    '2028-04-04': '清明', '2028-04-05': '清明', '2028-04-06': '清明',
+    '2028-04-29': '劳动节', '2028-04-30': '劳动节', '2028-05-01': '劳动节',
+    '2028-05-02': '劳动节', '2028-05-03': '劳动节',
+    '2028-06-08': '端午', '2028-06-09': '端午', '2028-06-10': '端午',
   };
 
   // 调休上班日（周末上班）—— 2026 官方安排
